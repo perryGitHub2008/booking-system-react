@@ -1,0 +1,5 @@
+.Banner::-webkit-scrollbar {
+    display: none;
+}
+.Banner::-webkit-scrollbar { width: 0 !important }
+.Banner { -ms-overflow-style: none; }
