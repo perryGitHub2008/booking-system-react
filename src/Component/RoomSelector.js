@@ -1,7 +1,6 @@
 import { Fragment, useState,useRef, useEffect, useReducer } from "react";
 import ClickAwayListener from '@mui/material/ClickAwayListener';
 import Button from '@mui/material/Button';
-import Typography from '@mui/material/Typography';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
@@ -9,12 +8,14 @@ import IconButton from '@mui/material/IconButton';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
 import Divider from '@mui/material/Divider';
-import Grid from '@mui/material/Grid';
-import Select from '@mui/material/Select';
-import MenuItem from '@mui/material/MenuItem';
 import Popper from '@mui/material/Popper';
 import Grow from '@mui/material/Grow';
 import Paper from '@mui/material/Paper';
+import RoomAdultSelector from "./RoomAdultSelector";
+import RoomAgeSelector from "./RoomAgeSelector";
+import RoomsSelector from "./RoomsSelector";
+import {useLocation} from "react-router-dom";
+import {useMemo} from 'react'
 
 const ACTIONS = {
     ADD_ROOM: 'add-room',
@@ -23,83 +24,85 @@ const ACTIONS = {
     ADD_CHILDREN: 'add-children',
     REMOVE_ADULT: 'remove-adult',
     REMOVE_CHILDREN: 'remove-children',
+    SELECT_ROOM: 'select-room',
     SELECT_ADULT: 'select-adult',
-    SELECT_CHILDREN: 'select-children'
+    SELECT_CHILDREN: 'select-children',
+    SELECT_AGE: 'select-age'
 }
 
 function reducer(rooms, action){
     switch (action.type){
         case ACTIONS.ADD_ROOM:
-            return [...rooms, {ID:Date.now(), Adults:2,Children:0,AgeArray:[]}]
+            if(rooms.Room<10){
+                if(rooms.Adults<=rooms.Room)
+                    return {...rooms, Room: rooms.Room+1, Adults:rooms.Room+1}
+                return {...rooms, Room: rooms.Room+1};
+            }
+            return rooms
         case ACTIONS.REMOVE_ROOM:
-            return rooms.filter((room)=> room.ID !== action.payload.ID)
+            if(rooms.Room>1)
+            return {...rooms, Room: rooms.Room-1};
+            return rooms;
         case ACTIONS.ADD_ADULT:
-            return rooms.map((room)=>{
-                if(room.ID === action.payload.ID && room.Adults<20){
-                        return {...room, Adults: room.Adults+1}
-                } 
-                return room
-            })
+            if(rooms.Adults<10)
+            return {...rooms, Adults: rooms.Adults+1};
+            return rooms
         case ACTIONS.ADD_CHILDREN:
-            return rooms.map((room)=>{
-                if(room.ID === action.payload.ID && room.Children<6){
-                    room.AgeArray.push({ID:Date.now(), Age:0})
-                    return {...room, Children: room.Children+1}
-                }
-                return room
-            })
+            if(rooms.Children<10){
+                rooms.AgeArray.push({ID:Date.now(), Age:0})
+                return {...rooms, Children: rooms.Children+1};
+            }
+            return rooms
         case ACTIONS.REMOVE_ADULT:
-            return rooms.map((room)=>{
-                if(room.ID === action.payload.ID && room.Adults>0){
-                    return {...room, Adults: room.Adults-1}
-                } 
-                return room
-            })
+            if(rooms.Adults>1)
+            return {...rooms, Adults: rooms.Adults-1};
+            return rooms
         case ACTIONS.REMOVE_CHILDREN:
-            return rooms.map((room)=>{
-                if(room.ID === action.payload.ID && room.Children>0){
-                    room.AgeArray.pop()
-                    return {...room, Children: room.Children-1}
-                }
-                return room
-            })
+            if(rooms.Children>0){
+                rooms.AgeArray.pop()
+                return {...rooms, Children: rooms.Children-1};
+            }
+            return rooms
+        case ACTIONS.SELECT_ROOM:
+            return {...rooms, Room: action.payload.numRoom};
         case ACTIONS.SELECT_ADULT:
-            return rooms.map((room)=>{
-                if(room.ID === action.payload.ID && action.payload.travelerType==='Adult'){
-                    return {...room, Adults: action.payload.numTraveler}
-                } 
-                return room
-            })
+            return {...rooms, Adults: action.payload.numAdult};
+
         case ACTIONS.SELECT_CHILDREN:
-            return rooms.map((room)=>{
-                if(room.ID === action.payload.ID){
-                    const differenceInChildren = room.Children - action.payload.numChildren
-                    if(differenceInChildren > 0){
-                        for(var i = 0 ; i < differenceInChildren ; i++){
-                            room.AgeArray.pop()
-                        }
-                    } else if (differenceInChildren < 0){
-                        for(var j = 0 ; j >differenceInChildren ; j --){
-                            room.AgeArray.push({ID:Date.now(), Age:0})
-                        }
-                    }
-                    return {...room, Children: action.payload.numChildren}
+            const differenceInChildren = rooms.Children - action.payload.numChildren
+            if(differenceInChildren > 0){
+                for(var i = 0 ; i < differenceInChildren ; i++){
+                    rooms.AgeArray.pop()
                 }
-                return room
-            })
+            } else if (differenceInChildren < 0){
+                for(var j = 0 ; j >differenceInChildren ; j --){
+                    rooms.AgeArray.push({ID:j, Age:0})
+                }
+            }
+            return {...rooms, Children: action.payload.numChildren};
+            
+        case ACTIONS.SELECT_AGE:
+            return rooms.AgeArray.map((age)=>{
+                if(age.ID === action.payload.ID){
+                    return age.Age=action.payload.age
+                }
+                return age
+                })
         default:
     }   
 }
 
-function RoomSelector () {
-
+function RoomSelector (props) {
+    function useQuery() {
+        const { search } = useLocation();
+        return useMemo(() => new URLSearchParams(search), [search]);
+      } 
+      const query = useQuery();
 
     const [open, setOpen] = useState(false);
     const anchorRef = useRef(null);
-  
     const handleToggle = () => {
       setOpen((prevOpen) => !prevOpen);
-      console.log(anchorRef.current.offsetWidth)
     };
   
     const handleClose = (event) => {
@@ -111,7 +114,7 @@ function RoomSelector () {
     };
   
   
-  
+
     const prevOpen = useRef(open);
     useEffect(() => {
       if (prevOpen.current === true && open === false) {
@@ -121,154 +124,87 @@ function RoomSelector () {
       prevOpen.current = open;
     }, [open]);
   
-
-    const scrollToBottomEl = useRef(null);
-    const [rooms, dispatch] = useReducer(reducer, 
-            [{  ID:Date.now(), 
-                Adults:2,
+    const setRooms = () => {
+        if(query.get("adult") !== null){
+            return {   Adults:query.get("adult"),
                 Children:0,
+                Room:query.get("room"),
                 AgeArray:[]
-            }]
+            }
+        } else {
+            return  {   Adults:2,
+                Children:0,
+                Room:1,
+                AgeArray:[]
+            }
+        }
+    }
+
+    const [rooms, dispatch] = useReducer(reducer, 
+            setRooms()
         )
 
     useEffect(()=>{
-        scrollToBottom();
-    },[rooms.length])
+        props.setRoomCallback(rooms)
+    })
 
-    const totalTraveler =()=>{
-        const adults = rooms.reduce((prev, curr) =>
-        { return prev + curr.Adults+ curr.Children}, 0);
-        return adults;
+    const handleRoomChange = (event) => {
+        dispatch({type: ACTIONS.SELECT_ROOM, payload: {numRoom: event.target.value}})
+    };
+    const handleChildrenChange = (event ) => {
+        dispatch({type: ACTIONS.SELECT_CHILDREN, payload: {numChildren: event.target.value}})
+    };
+    const handleAdultChange = (event,) => {
+        dispatch({type: ACTIONS.SELECT_ADULT, payload: {numAdult: event.target.value}})
+    };
+    const handleAgeChange = (event,ageID) => {
+        dispatch({type: ACTIONS.SELECT_AGE, payload: {age: event.target.value, ageID: ageID}})
     };
 
-    const scrollToBottom = () =>{ 
-        scrollToBottomEl.current?.scrollTo({top:1000, behavior: 'smooth'})
-    }; 
-    const handleChange = (event, id) => {
-        dispatch({type: ACTIONS.SELECT_CHILDREN, payload: {ID: id, numChildren: event.target.value}})
-    };
-    const setAdultSelect = ()=>{
-        var adults = [];
-        for (var i = 0; i <= 20; i++) {
-            adults.push(<MenuItem key={i} value={i}>{i}</MenuItem>);
-        }
-        return adults;
-    };
-    const setChildrenSelect = ()=>{
-        var children = [];
-        for (var i = 0; i <= 6; i++) {
-            children.push(<MenuItem key={i} value={i}>{i}</MenuItem>);
-        }
-        return children;
-    };
-    const setAgeSelect = ()=>{
-        const age = [];
-        for (var i = 0; i <= 17 ; i++){
-            age.push(<MenuItem key={i} value={i}>{i}</MenuItem>)
-        }
-        return age;
-    }
-
-
-    const roomList = rooms.map((data,index)=>{
-        const ageList = data.AgeArray.map((ageData,sIndex)=>{
+    const roomList = ()=>{
+        let ageList = {}
+        if(rooms.AgeArray!==null)
+        ageList = rooms.AgeArray.map((ageData,sIndex)=>{
             return (
                 <ListItem>
-                    <ListItemText id="list-label-adults" primary={`Age of child ${sIndex+1}`} />
-                    <Select
-                        labelId="demo-simple-select-autowidth-label"
-                        id="demo-simple-select-autowidth"
-                        value={ageData.Age}
-                        onChange={(e) =>handleChange(e, data.ID, 'Age')}
-                        autoWidth
-                        label="Age"
-                        variant='standard'
-                        MenuProps={{ disablePortal: true }}
-                        >
-                        {setAgeSelect()}
-                    </Select>
+                    <ListItemText id="list-label-age" primary={`Age of child ${sIndex+1}`} />
+                    <RoomAgeSelector age={ageData['Age']} ageID={ageData.ID} handleAgeChange={handleAgeChange}/>
                 </ListItem>
             )
         })
         
 
         return(
-            <Fragment key={index}>      
-                <Grid container spacing={2}>
-                    <Grid item xs={8}>
-                        <Typography sx={{p:1, ml:1}}>
-                            Room {index+1}
-                        </Typography>
-                    </Grid>
-                    <Grid item xs={2}>
-                    {rooms.length > 1 &&
-                        <Button variant="contained" onClick={()=>dispatch({type: ACTIONS.REMOVE_ROOM, payload: {ID: data.ID}})} sx={{mt:0.5}}>
-                            Remove
-                        </Button>
-                    }
-                    </Grid>
-                </Grid>  
+            <Fragment>      
                 <ListItem>
-                    <ListItemText id="list-label-adults" primary="Adults:" />
-                    <IconButton onClick={()=>dispatch({type: ACTIONS.REMOVE_ADULT, payload: {ID: data.ID}})}>
+                    <ListItemText id="list-label-room" primary="Room:"/>
+                    <IconButton  onClick={()=>dispatch({type: ACTIONS.REMOVE_ROOM, payload: {}})}>
                         <RemoveCircleOutlineIcon/>
                     </IconButton>
-                    <Select
-                        labelId="demo-simple-select-autowidth-label"
-                        id="demo-simple-select-autowidth"
-                        value={data.Adults}
-                        onChange={(e) =>handleChange(e, data.ID, 'Adult')}
-                        autoWidth
-                        label="Age"
-                        variant='standard'
-                        MenuProps={{ disablePortal: true }}
-                        >
-                        {setAdultSelect()}
-                    </Select>
-                    <IconButton onClick={()=>dispatch({type: ACTIONS.ADD_ADULT, payload: {ID: data.ID}})}>
+                        <RoomsSelector room={rooms.Room}  handleRoomChange={handleRoomChange}/>
+                    <IconButton onClick={()=>dispatch({type: ACTIONS.ADD_ROOM, payload: {}})}>
                         <AddCircleOutlineIcon/>
                     </IconButton>
                 </ListItem>
                 <ListItem>
-                    <ListItemText id="list-label-children" primary="Children:" secondary="Ages 0 to 17"/>
-                    <IconButton onClick={()=>dispatch({type: ACTIONS.REMOVE_CHILDREN, payload: {ID: data.ID}})}>
+                    <ListItemText id="list-label-adults" primary="Guest:"/>
+                    <IconButton disabled={rooms.Room>=rooms.Adults ? true :false} onClick={()=>dispatch({type: ACTIONS.REMOVE_ADULT, payload: {}})}>
                         <RemoveCircleOutlineIcon/>
                     </IconButton>
-                    <Select
-                        labelId="demo-simple-select-autowidth-label"
-                        id="demo-simple-select-autowidth"
-                        value={data.Children}
-                        onChange={(e) =>handleChange(e, data.ID, 'Children')}
-                        autoWidth
-                        label="Age"
-                        variant='standard'
-                        MenuProps={{ disablePortal: true }}
-                        >
-                        {setChildrenSelect()}
-                    </Select>
-                    <IconButton onClick={()=>dispatch({type: ACTIONS.ADD_CHILDREN, payload: {ID: data.ID}})}>
+                        <RoomAdultSelector adult={rooms.Adults}  handleAdultChange={handleAdultChange}/>
+                    <IconButton  onClick={()=>dispatch({type: ACTIONS.ADD_ADULT, payload: {}})}>
                         <AddCircleOutlineIcon/>
                     </IconButton>
                 </ListItem>
                 {
-                    data.AgeArray.length > 0 &&
+                    rooms.AgeArray.length > 0 &&
                     ageList
                 }
                 <Divider />            
             </Fragment>
           ); 
-    });
-    const AddRoomButton = () => {
-        if(rooms.length>7){
-            return (<Button disabled onClick={()=>dispatch({type: ACTIONS.ADD_ROOM})} sx={{width:1, py:'10px'}}>
-                Add a Room
-            </Button>);
-        } else {
-            return (<Button onClick={()=>{dispatch({type: ACTIONS.ADD_ROOM});}} sx={{width:1, py:'10px'}}>
-                Add a Room
-            </Button>);
-        }
-    }
+    };
+
     return (
         <div>
         <Button
@@ -280,13 +216,14 @@ function RoomSelector () {
           onClick={handleToggle}
           sx={{ border:1, borderColor:'grey.700',borderRadius:'4px',color: 'grey.900', background: 'none', width:1, height:'56px'}}
         >
-          {rooms.length} Room, {totalTraveler()} Guest
+           {rooms.Room} Room, {rooms.Adults} Guest
         </Button>
         <Popper
           open={open}
           anchorEl={anchorRef.current}
           role={undefined}
           transition
+          style={{zIndex:1}}
           modifiers={[
             {
                 name: 'flip',
@@ -308,19 +245,12 @@ function RoomSelector () {
             >
               <Paper>
                 <ClickAwayListener onClickAway={handleClose}>
-                <List ref={scrollToBottomEl} sx={{ overflow: 'auto', maxHeight:'425px', width:'385px'}}>
-                    {roomList}
+                <List sx={{ overflow: 'auto', maxHeight:'425px', width:'385px'}}>
+                    {roomList()}
                     <Divider />
-                    <AddRoomButton />
-                    <Divider />
-                    <div ></div>
                 </List>
                 </ClickAwayListener>
-                <List>
-                    <ListItem>
-                        <ListItemText sx={{}} id="list-label-children" primary={`${rooms.length} Room`} secondary={`${totalTraveler()} Guests`} />
-                    </ListItem>
-                </List>
+
               </Paper>
             </Grow>
           )}

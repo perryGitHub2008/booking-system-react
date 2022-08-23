@@ -34,11 +34,12 @@ function BookingTab(props) {
       <>
       <Box sx={{height:'400px', backgroundImage:`url(${BackgroupImage})`}}>
       <TabContext value={value}> 
-        <Box sx={{pt:8,mx: "auto", width: 400 }}>
+        <Box sx={{pt:8,mx: "auto", width: 150 }}>
           <TabList onChange={handleChange} aria-label="" sx={{position: 'relative', boxShadow: '2px 2px 8px rgba(0, 0, 0, 0.5)',zIndex:'modal', background:'white', borderRadius: 2}}>
             <Tab value="1" href="/hotels-and-homes" onClick={(event) => {event.preventDefault()}} icon={<LocationCityIcon />} aria-label="phone" label="Hotels & Home"/>
-            <Tab value="2" href="/fight-and-hotel" onClick={(event) => {event.preventDefault()}} icon={<FlightHotelIcon />} aria-label="favorite" label="Flight + Hotels"/>
+            {/*<Tab value="2" href="/fight-and-hotel" onClick={(event) => {event.preventDefault()}} icon={<FlightHotelIcon />} aria-label="favorite" label="Flight + Hotels"/>
             <Tab value="3" href="/fight" onClick={(event) => {event.preventDefault()}} icon={<FlightIcon />} aria-label="phone" label="Flight"/>
+            */}
           </TabList>
         </Box>
         <Box sx={{ boxShadow: '2px 2px 8px rgba(0, 0, 0, 0.5)', background: 'rgba(255, 255, 255, .3)'  ,borderRadius: 3, mt:-2, mx: "auto", width: [450,700,1000]}}>

@@ -12,24 +12,23 @@ import MenuItem from '@mui/material/MenuItem';
 import Tooltip from '@mui/material/Tooltip';
 import Avatar from '@mui/material/Avatar';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
-
 import {Link} from 'react-router-dom';
-
+import { useProfile } from '../Context/ProfileProvider';
 const pages = [
-  {name:'Flight + Hotel',link:'fight-and-hotel'},
-  {name:'Hotels & Homes',link:'hotels-and-homes'},
-  {name:'Flights',link:'fight'},
-  {name:'Today’s deals',link:'todaysdeals'},
-  {name:'Apartments',link:'apartments'}
+  //{name:'Flight + Hotel',link:'fight-and-hotel'},
+  //{name:'Hotels & Homes',link:'hotels-and-homes'},
+  //{name:'Flights',link:'fight'},
+  //{name:'Today’s deals',link:'todaysdeals'},
+  //{name:'Apartments',link:'apartments'}
 ];
 const settings = [
-  {name:'Profile',link:''}, 
-  {name:'Account',link:''}, 
-  {name:'Dashboard',link:''}, 
-  {name:'Logout',link:''}
+  {name:'Profile',link:'/profile'}, 
+  {name:'My Booking', link:'/mybooking'},
+  {name:'Logout',link:'/logout'}
 ];
 
 function ResponsiveAppBar(props) {
+  const {profile} = useProfile();
   const [anchorElNav, setAnchorElNav] = useState(null);
   const [anchorElUser, setAnchorElUser] = useState(null);
   const [anchorElLogin, setAnchorElLogin] = useState(null);
@@ -51,19 +50,15 @@ function ResponsiveAppBar(props) {
   const handleCloseLoginMenu = () => {
     setAnchorElLogin(null);
   };
-  const handleLogout = () => {
-    localStorage.clear();
-    window.location.reload();
-  }
+
 
   const isLoggedIn = () =>{
-
-    if(localStorage.getItem("username") !== null){
+    if(profile.lastName !== undefined){
       return (
         <Box sx={{ flexGrow: 0 }}>
             <Tooltip title="Open settings">
               <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                <Avatar alt={localStorage.getItem("username")} src="/static/images/avatar/2.jpg" />
+                <Avatar alt={profile.lastName} src="/static/images/avatar/2.jpg" />
               </IconButton>
             </Tooltip>
             <Menu
@@ -82,11 +77,14 @@ function ResponsiveAppBar(props) {
               open={Boolean(anchorElUser)}
               onClose={handleCloseUserMenu}
             >
-              {settings.map((setting) => (
-                <MenuItem key={setting.name} onClick={handleCloseUserMenu}>
-                  <Typography component={Button} onClick={handleLogout} textAlign="center">{setting.name}</Typography>
-                </MenuItem>
-              ))}
+              {settings.map((setting) => {
+
+                  return (
+                    <MenuItem key={setting.name} onClick={handleCloseUserMenu}>
+                      <Button component={Link} to={`${setting.link}`}  textAlign="center">{setting.name}</Button>
+                    </MenuItem>
+                  )
+              })}
             </Menu>
           </Box>  
       );
@@ -124,7 +122,7 @@ function ResponsiveAppBar(props) {
             >
               <MenuItem key={'Login'} onClick={handleCloseLoginMenu}>
                 <Typography              
-                  component={Link} to={'login'}  textAlign="center"
+                  component={Link} to={'/login'}  textalign="center"
                   sx={{color:"black", textDecoration: "none" }}
                 >
                   Login
@@ -132,7 +130,7 @@ function ResponsiveAppBar(props) {
               </MenuItem>
               <MenuItem key={'Regtiser'} onClick={handleCloseLoginMenu}>
                 <Typography              
-                  component={Link} to={'regtiser'}  textAlign="center"
+                  component={Link} to={'/Register'}  textalign="center"
                   sx={{color:"black", textDecoration: "none" }}
                 >
                   Regtiser
@@ -144,7 +142,7 @@ function ResponsiveAppBar(props) {
           <Button
               key={1}
               component={Link} 
-              to={'login'}
+              to={'/login'}
               onClick={handleCloseNavMenu}
               sx={{ my: 2, color: 'white', display: 'block' }}
             >
@@ -153,7 +151,7 @@ function ResponsiveAppBar(props) {
             <Button
               key={2}
               component={Link} 
-              to={'Register'}
+              to={'/Register'}
               onClick={handleCloseNavMenu}
               sx={{ my: 2, color: 'white', display: 'block' }}
             >
@@ -174,7 +172,7 @@ function ResponsiveAppBar(props) {
              variant="h6"
              noWrap
              component={Link}
-             to={''}
+             to={'/'}
              sx={{ mr: 2, color:'white',textDecoration: "none", display: { xs: 'none', md: 'flex' } }}
            >
              Clone
@@ -214,7 +212,7 @@ function ResponsiveAppBar(props) {
               {pages.map((page) => (
                 <MenuItem key={page.link} onClick={handleCloseNavMenu}>
                   <Typography              
-                    component={Link} to={`/${page.link}`}  textAlign="center"
+                    component={Link} to={`/${page.link}`}  textalign="center"
                     sx={{color:"black", textDecoration: "none" }}
                   >{page.name}</Typography>
                 </MenuItem>

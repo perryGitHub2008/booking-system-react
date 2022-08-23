@@ -3,15 +3,16 @@ import Paper from '@mui/material/Paper';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
 import { useFormik } from "formik";
 import * as yup from "yup"; 
-import { useNavigate } from "react-router-dom";
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 import { useState } from 'react';
-import{Link} from 'react-router-dom'
-import AuthService from "../Service/authService";
+import{Link, Navigate, useNavigate} from 'react-router-dom'
+import { useAuth } from '../Context/AuthProvider';
+import { useProfile } from '../Context/ProfileProvider';
+import axios from '../Service/api';
 
 const validationSchema = yup.object({
     email: yup
@@ -25,11 +26,10 @@ const validationSchema = yup.object({
 });
   
 function Login(props){
+    const {id, setID} = useAuth();
+    const {setProfile} = useProfile();
     const history = useNavigate();
     const [open, setOpen] = useState(false);
-    const handleClickOpen = () => {
-        setOpen(true);
-    };
 
     const handleClose = () => {
         setOpen(false);
@@ -40,20 +40,22 @@ function Login(props){
           password: '',
         },
         validationSchema: validationSchema,
-        onSubmit: (values) => {
+        onSubmit: async (values) => {
             const postData = {username: values.email, password: values.password}
-            AuthService.loginService(postData)
-                        .then(()=> {
-                            history("../")
-                            window.location.reload();
-                        })
-                        .catch((error)=>{
-
-                            handleClickOpen();                                
-                        })
+            try{
+                const rs = await axios.post("/account/login",postData,{withCredentials: true})
+                setID(rs.data.id)
+                setProfile(prev=>{
+                    return {...prev, firstName: rs.data.firstName, lastName:rs.data.lastName}
+                })
+                history(-1)
+            } catch (err){
+                setOpen(true);
+            }
         },
-      });
+    });
     return (
+        id === "" ? (
         <>
             <Dialog
             open={open}
@@ -114,12 +116,15 @@ function Login(props){
             <Typography component={Link} to={'/Register'} variant="subtitle1" sx={{width:'50%', textDecoration: 'none'}}>
                 Create account
             </Typography>
-            <Typography variant="subtitle1" sx={{width:'50%' ,textAlign: 'right'}}>
+            <Typography variant="subtitle1" sx={{width:'50%' }} style={{textAlign: 'center'}}>
                 <LockOpenIcon fontSize='small' />Forget Password?
             </Typography>
             </Box>
         </Paper>
         </>
+        ):(
+            <Navigate  to="/profile" replace={true}/>
+        )
     );
 }
 export default Login
