@@ -9,7 +9,7 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 import { useState } from 'react';
-import AuthService from "../Service/authService";
+import axios from '../Service/api';
 
 const validationSchema = yup.object({
     firstName: yup
@@ -54,9 +54,10 @@ function Register(props){
             confirmPassword:''
         },
         validationSchema: validationSchema,
-        onSubmit: (values) => {
+        onSubmit: async (values) => {
             const postData = {firstname:values.firstName, lastname: values.lastName, email: values.email, password: values.password};
-            AuthService.registerService(postData)
+
+            await axios.post("/account/signup",postData,{withCredentials: true})
                         .then(()=> setRegister(true))
                         .catch((error) => {
 
@@ -77,7 +78,8 @@ function Register(props){
             </DialogTitle>
             <DialogContent>
             <DialogContentText id="alert-dialog-description">
-                {register? `Verification email has been sent to ${formik.values.email}. Just follow the instructions inside.` : "Email has been registered"}
+                {register? (`Verification email has been sent to ${formik.values.email}. Just follow the instructions inside. Please go https://mailtrap.io/ and use testing20082009@gmail.com : abcd1234 to login`
+                ) : "Email has been registered"}
             </DialogContentText>
             </DialogContent>
             <DialogActions>

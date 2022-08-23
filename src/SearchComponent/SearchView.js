@@ -3,54 +3,71 @@ import Button from '@mui/material/Button'
 import CheckInCheckOutPicker from '../Component/CheckInCheckOutPicker';
 import DestinationAutoComplete from '../Component/DestinationAutoComplete';
 import RoomSelector from '../Component/RoomSelector';
-import SearchFilterBar from './SearchFilterBar';
-import PropertyList from './PropertyList';
 import{Link} from 'react-router-dom'
-import { useState } from 'react';
+import { useState,useMemo } from 'react';
+import { AppBar , Toolbar} from '@mui/material';
+import {useLocation} from "react-router-dom";
 
 function SearchView(props){
-    const [destination, setDestination] = useState({ code: 'HK', label: 'Hong Kong', phone: '852' })
+    function useQuery() {
+        const { search } = useLocation();
+    
+        return useMemo(() => new URLSearchParams(search), [search]);
+    }
+    const query = useQuery();
+
+    const [destination, setDestination] = useState({ data: query.get("country"), type: query.get('searchtype')})
+    const [room, setRoom] = useState({Adults:query.get("adult"),Room:query.get("room")});
+    const [checkInOut, setCheckInOut] = useState([query.get("checkin"), query.get("checkout")]);
     const setDestinationCallback = (country) =>{
         setDestination(country)
     }
+    const setRoomCallback = (room) =>{
+        setRoom(room)
+    }
+    const setCheckInOutCallback = (date) =>{
+        setCheckInOut(date)
+    }
+    
     return (
-        <Grid container sx={{width:'1900px'}}>
-            <Grid item xs={12}>
-                <Grid 
-                container 
-                justifyContent="center"
-                alignItems="center"
-                sx={{py:1, background:'rgb(158, 158, 158,.3)'}}
+        <>
+            <AppBar position="relative"
+                    color='transparent'
+
+            >
+                <Toolbar variant="dense"                 
+                        sx={{ py: 1, background: 'rgb(158, 158, 158,.3)' }}
                 >
-                    <Grid item xs={2}>
-                        <DestinationAutoComplete setDestinationCallback={setDestinationCallback}/>
+                    <Grid
+                        container
+                        justifyContent="center"
+                        alignItems="center"
+                    >
+                        <Grid item xs={2}>
+                            <DestinationAutoComplete setDestinationCallback={setDestinationCallback} />
+                        </Grid>
+                        <Grid item xs={2} sx={{ ml: 1 }}>
+                            <CheckInCheckOutPicker setCheckInOutCallback={setCheckInOutCallback}/>
+                        </Grid>
+                        <Grid item xs={2} sx={{ ml: 1 }}>
+                            <RoomSelector setRoomCallback={setRoomCallback} />
+                        </Grid>
+                        <Grid item xs={1}>
+                            <Button
+                                variant="contained"
+                                sx={{ ml: 3, height: '56px', width: '100%' }}
+                                component={Link}
+                                to={{
+                                    pathname: `/search?country=${destination['data']}&searchtype=${destination['type']}&room=${room.Room}&adult=${room.Adults}&checkin=${checkInOut[0]}&checkout=${checkInOut[1]}`,
+                                    state: 123
+                                }}
+                                onClick={()=>{props.setLoading(true)}}
+                            >Search</Button>
+                        </Grid>
                     </Grid>
-                    <Grid item xs={2} sx={{ml:1}}>
-                        <CheckInCheckOutPicker/>
-                    </Grid>
-                    <Grid item xs={2}sx={{ml:1}}>
-                        <RoomSelector/>
-                    </Grid>
-                    <Grid item xs={1} >
-                        <Button 
-                        variant="contained" 
-                        sx={{ml:3,height:'56px', width:'100%'}}
-                        component={Link} 
-                        to={{
-                            pathname: `/search?country=${destination['code']}`,
-                            state:123 
-                            }}
-                        >Search</Button>
-                    </Grid>
-                </Grid>
-            </Grid>
-            <Grid item xs={12}>
-                <SearchFilterBar/>
-            </Grid>
-            <Grid item xs={12} sx={{py:2}}>
-                <PropertyList/>
-            </Grid>
-        </Grid>
+                </Toolbar>
+            </AppBar>
+        </>
     );
 }
 
